@@ -3,7 +3,7 @@ import Footer from '../components/Footer';
 
 const contactItems = [
   {
-    icon: '✉️',
+    icon: '✉',
     title: 'Email',
     value: 'info@sportiva.com',
   },
