@@ -8,17 +8,17 @@ const contactItems = [
     value: 'info@sportiva.com',
   },
   {
-    icon: '📞',
+    icon: '☎',
     title: 'Telepon',
     value: '+62 891-2345-6789',
   },
   {
-    icon: '📍',
+    icon: '🏠︎',
     title: 'Alamat',
     value: 'Jl. Olahraga No. 1, Purwokerto, Jawa Tengah',
   },
   {
-    icon: '📱',
+    icon: '🅾',
     title: 'Social Media',
     value: '@sportiva.official',
   },
