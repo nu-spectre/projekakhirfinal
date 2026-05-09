@@ -148,7 +148,7 @@ function toYouTubeEmbed(url) {
   if (watchMatch) videoId = watchMatch[1];
   else if (shortMatch) videoId = shortMatch[1];
   if (videoId) {
-    return `https://www.youtube.com/embed/${videoId}?autoplay=1&mute=1&loop=1&controls=0&showinfo=0&rel=0&iv_load_policy=3&modestbranding=1&disablekb=1&fs=0&playlist=${videoId}`;
+    return `https://www.youtube.com/embed/Bcpu-jqAL6w?autoplay=1&mute=1&loop=1&controls=0&showinfo=0&rel=0&iv_load_policy=3&modestbranding=1&disablekb=1&fs=0&playlist=Bcpu-jqAL6w`;
   }
   return url;
 }
@@ -156,7 +156,7 @@ function toYouTubeEmbed(url) {
 function toVimeoEmbed(url) {
   if (url.includes('player.vimeo.com/video/')) return url + '?autoplay=1&muted=1&loop=1&background=1';
   const match = url.match(/vimeo\.com\/(\d+)/);
-  if (match) return `https://player.vimeo.com/video/${match[1]}?autoplay=1&muted=1&loop=1&background=1`;
+  if (match) return `https://www.youtube.com/embed/Bcpu-jqAL6w?autoplay=1&mute=1&loop=1&playlist=Bcpu-jqAL6w&controls=0&modestbranding=1&rel=0&vq=hd1080%27;`;
   return url;
 }
 

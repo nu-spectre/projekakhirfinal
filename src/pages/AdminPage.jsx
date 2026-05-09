@@ -1,6 +1,12 @@
-import React, { useState, useRef } from 'react';
-import { PRODUCTS } from '../data/products';
+import React, { useState, useRef, useEffect } from 'react';
+
 import Logo from '../components/Logo';
+import {
+  getProducts,
+  createProduct,
+  updateProduct,
+  deleteProduct,
+} from '../services/productService';
 
 const BRANDS = ['Nike', 'adidas', 'Asics', 'Mizuno'];
 const WISNU_EMAIL = 'wisnu@sportiva.com';
@@ -98,10 +104,10 @@ function DashboardTab({ reviews, allProducts, onNavigate, onSwitchTab, currentUs
   const totalReviews = myReviews.length;
   const avgRating = totalReviews ? (myReviews.reduce((s, r) => s + r.rating, 0) / totalReviews).toFixed(1) : '–';
 
-  const shoesCount = PRODUCTS.shoes.length;
-  const topCount = PRODUCTS.top.length;
-  const bottomCount = PRODUCTS.bottom.length;
-  const totalProducts = shoesCount + topCount + bottomCount + (customProducts?.length || 0);
+  const shoesCount = allProducts.filter(p => (p.cat || p.category) === 'shoes').length;
+  const topCount = allProducts.filter(p => (p.cat || p.category) === 'top').length;
+  const bottomCount = allProducts.filter(p => (p.cat || p.category) === 'bottom').length;
+  const totalProducts = allProducts.length;
 
   const recent = [...myReviews].sort((a, b) => new Date(b.date) - new Date(a.date)).slice(0, 5);
   const isWisnu = currentUser?.email === WISNU_EMAIL;
@@ -663,6 +669,64 @@ function ProductsTab({ customProducts, onAddProduct, onUpdateProduct, onDeletePr
 // ─── MAIN EXPORT ─────────────────────────────────────────────────────────────
 export default function AdminPage({ onNavigate, onLogout, currentUser, reviews = [], allProducts = [], onDeleteReview, customProducts = [], onAddProduct, onUpdateProduct, onDeleteProduct }) {
   const [activeTab, setActiveTab] = useState('dashboard');
+  const [dbProducts, setDbProducts] = useState([]);
+
+useEffect(() => {
+  const loadInitialData = async () => {
+    try {
+      const data = await getProducts();
+      
+      // Mengubah string JSON (images & specs) dari DB menjadi Array/Object
+      const formattedData = data.map(p => ({
+        ...p,
+        images: typeof p.images === 'string' ? JSON.parse(p.images) : (p.images || []),
+        specs: typeof p.specs === 'string' ? JSON.parse(p.specs) : (p.specs || [])
+      }));
+      
+      setDbProducts(formattedData);
+    } catch (error) {
+      console.error("Gagal memuat produk:", error);
+    }
+  };
+
+  loadInitialData();
+}, []);
+
+const fetchProducts = async () => {
+  try {
+    const res = await axios.get(API);
+    setDbProducts(res.data);
+  } catch (err) {
+    console.error(err);
+  }
+};
+
+const handleAddProduct = async (product) => {
+  try {
+    await axios.post(API, product);
+    fetchProducts();
+  } catch (err) {
+    console.error(err);
+  }
+};
+
+const handleUpdateProduct = async (id, product) => {
+  try {
+    await axios.put(`${API}/${id}`, product);
+    fetchProducts();
+  } catch (err) {
+    console.error(err);
+  }
+};
+
+const handleDeleteProduct = async (id) => {
+  try {
+    await axios.delete(`${API}/${id}`);
+    fetchProducts();
+  } catch (err) {
+    console.error(err);
+  }
+};
   const displayName = currentUser?.name || 'Admin';
   const isWisnu = currentUser?.email === WISNU_EMAIL;
 
@@ -763,10 +827,10 @@ export default function AdminPage({ onNavigate, onLogout, currentUser, reviews =
           )}
           {activeTab === 'products' && isWisnu && (
             <ProductsTab
-              customProducts={customProducts}
-              onAddProduct={onAddProduct}
-              onUpdateProduct={onUpdateProduct}
-              onDeleteProduct={onDeleteProduct}
+             customProducts={dbProducts}
+             onAddProduct={handleAddProduct}
+             onUpdateProduct={handleUpdateProduct}
+             onDeleteProduct={handleDeleteProduct}
             />
           )}
         </div>

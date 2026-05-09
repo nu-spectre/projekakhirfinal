@@ -61,6 +61,13 @@ const styles = {
   },
 };
 
+// Format harga ke format Indonesia: 1000000 → Rp 1.000.000,00
+function formatPrice(price) {
+  const num = parseFloat(String(price).replace(/[^\d.]/g, ''));
+  if (isNaN(num)) return price;
+  return 'Rp ' + num.toLocaleString('id-ID', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
 export default function ProductCard({ product, isFav, onFav, onClick }) {
   const [hovered, setHovered] = React.useState(false);
 
@@ -85,11 +92,9 @@ export default function ProductCard({ product, isFav, onFav, onClick }) {
             transform: hovered ? 'scale(1.04)' : 'scale(1)',
           }}
           onError={(e) => {
-            e.target.src =
-              'https://via.placeholder.com/400x300/f5f5f5/999?text=Produk';
+            e.target.src = 'https://via.placeholder.com/400x300/f5f5f5/999?text=Produk';
           }}
         />
-        {/* Tombol Favorit */}
         <button
           style={styles.favBtn}
           onClick={(e) => {
@@ -103,7 +108,7 @@ export default function ProductCard({ product, isFav, onFav, onClick }) {
       </div>
       <div style={styles.info}>
         <h3 style={styles.name}>{product.name}</h3>
-        <p style={styles.price}>{product.price}</p>
+        <p style={styles.price}>{formatPrice(product.price)}</p>
       </div>
     </div>
   );

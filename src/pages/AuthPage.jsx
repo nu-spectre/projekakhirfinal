@@ -45,6 +45,9 @@ const S = {
     cursor: 'pointer', fontFamily: "'DM Sans', sans-serif", marginTop: 6,
     transition: 'background .2s',
   },
+  primaryBtnDisabled: {
+    opacity: 0.6, cursor: 'not-allowed',
+  },
   switchRow: { textAlign: 'center', fontSize: 13, color: '#777', marginTop: 20 },
   switchLink: { color: '#1a5276', fontWeight: 700, cursor: 'pointer', marginLeft: 4 },
   divider: { textAlign: 'center', fontSize: 12, color: '#bbb', margin: '18px 0 12px', position: 'relative' },
@@ -90,6 +93,7 @@ function LoginPanel({ onLogin, onSwitch, onForgot }) {
   const [err, setErr]         = useState({});
   const [apiErr, setApiErr]   = useState('');
   const [hov, setHov]         = useState(false);
+  const [loading, setLoading] = useState(false);
 
   const validate = () => {
     const e = {};
@@ -99,12 +103,19 @@ function LoginPanel({ onLogin, onSwitch, onForgot }) {
     return e;
   };
 
-  const submit = () => {
+  const submit = async () => {
     const e = validate();
     if (Object.keys(e).length) { setErr(e); return; }
     setErr({});
-    const result = onLogin(email.trim(), pw);
-    if (!result.ok) setApiErr(result.msg);
+    setLoading(true);
+    try {
+      const result = await onLogin(email.trim(), pw);
+      if (result && !result.ok) setApiErr(result.msg || 'Login gagal');
+    } catch {
+      setApiErr('Terjadi kesalahan, coba lagi');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -122,8 +133,14 @@ function LoginPanel({ onLogin, onSwitch, onForgot }) {
       <Input label="Email" type="email" value={email} onChange={(e) => { setEmail(e.target.value); setApiErr(''); }} placeholder="contoh@email.com" error={err.email} onKeyDown={(e) => e.key === 'Enter' && submit()} />
       <Input label="Password" type="password" value={pw} onChange={(e) => { setPw(e.target.value); setApiErr(''); }} placeholder="Masukkan password" error={err.pw} onKeyDown={(e) => e.key === 'Enter' && submit()} />
 
-      <button style={{ ...S.primaryBtn, background: hov ? '#154360' : '#1a5276' }} onMouseEnter={() => setHov(true)} onMouseLeave={() => setHov(false)} onClick={submit}>
-        Masuk
+      <button
+        style={{ ...S.primaryBtn, background: hov ? '#154360' : '#1a5276', ...(loading ? S.primaryBtnDisabled : {}) }}
+        onMouseEnter={() => setHov(true)}
+        onMouseLeave={() => setHov(false)}
+        onClick={submit}
+        disabled={loading}
+      >
+        {loading ? 'Memproses...' : 'Masuk'}
       </button>
 
       <div style={S.forgotLink} onClick={onForgot}>Lupa password?</div>
@@ -156,6 +173,7 @@ function RegisterPanel({ onRegister, onSwitch }) {
   const [apiErr, setApiErr]   = useState('');
   const [success, setSuccess] = useState('');
   const [hov, setHov]         = useState(false);
+  const [loading, setLoading] = useState(false);
 
   const validate = () => {
     const e = {};
@@ -168,14 +186,21 @@ function RegisterPanel({ onRegister, onSwitch }) {
     return e;
   };
 
-  const submit = () => {
+  const submit = async () => {
     const e = validate();
     if (Object.keys(e).length) { setErr(e); return; }
     setErr({}); setApiErr('');
-    const result = onRegister(email.trim(), pw, name.trim());
-    if (!result.ok) { setApiErr(result.msg); return; }
-    setSuccess('Akun berhasil dibuat! Silakan login.');
-    setTimeout(() => onSwitch('login'), 1800);
+    setLoading(true);
+    try {
+      const result = await onRegister(email.trim(), pw, name.trim()); // ← await ditambahkan
+      if (!result.ok) { setApiErr(result.msg || 'Gagal membuat akun'); return; }
+      setSuccess('Akun berhasil dibuat! Silakan login.');
+      setTimeout(() => onSwitch('login'), 1800);
+    } catch {
+      setApiErr('Terjadi kesalahan, coba lagi');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -200,8 +225,14 @@ function RegisterPanel({ onRegister, onSwitch }) {
       <Input label="Password" type="password" value={pw} onChange={(e) => setPw(e.target.value)} placeholder="Minimal 6 karakter" error={err.pw} />
       <Input label="Konfirmasi Password" type="password" value={pwc} onChange={(e) => setPwc(e.target.value)} placeholder="Ulangi password" error={err.pwc} onKeyDown={(e) => e.key === 'Enter' && submit()} />
 
-      <button style={{ ...S.primaryBtn, background: hov ? '#154360' : '#1a5276' }} onMouseEnter={() => setHov(true)} onMouseLeave={() => setHov(false)} onClick={submit}>
-        Buat Akun
+      <button
+        style={{ ...S.primaryBtn, background: hov ? '#154360' : '#1a5276', ...(loading ? S.primaryBtnDisabled : {}) }}
+        onMouseEnter={() => setHov(true)}
+        onMouseLeave={() => setHov(false)}
+        onClick={submit}
+        disabled={loading}
+      >
+        {loading ? 'Memproses...' : 'Buat Akun'}
       </button>
 
       <div style={S.switchRow}>
@@ -213,9 +244,8 @@ function RegisterPanel({ onRegister, onSwitch }) {
 }
 
 // ─── FORGOT PASSWORD PANEL ───────────────────────────────────────────────────
-// Alur 3 langkah: 1) Masukkan email  2) Buat password baru  3) Sukses
 function ForgotPanel({ onForgotPassword, onSwitch }) {
-  const [step, setStep]       = useState(1); // 1 | 2 | 3
+  const [step, setStep]       = useState(1);
   const [email, setEmail]     = useState('');
   const [pw, setPw]           = useState('');
   const [pwc, setPwc]         = useState('');
@@ -228,18 +258,17 @@ function ForgotPanel({ onForgotPassword, onSwitch }) {
     else if (!/\S+@\S+\.\S+/.test(email)) e.email = 'Format email tidak valid';
     if (Object.keys(e).length) { setErr(e); return; }
     setErr({});
-    // Check email exists (we check in parent)
     setStep(2);
   };
 
-  const stepNext2 = () => {
+  const stepNext2 = async () => {
     const e = {};
     if (!pw) e.pw = 'Password tidak boleh kosong';
     else if (pw.length < 6) e.pw = 'Password minimal 6 karakter';
     if (pw !== pwc) e.pwc = 'Konfirmasi password tidak cocok';
     if (Object.keys(e).length) { setErr(e); return; }
     setErr({});
-    const result = onForgotPassword(email.trim(), pw);
+    const result = await onForgotPassword(email.trim(), pw); // ← await ditambahkan
     if (!result.ok) { setErr({ email: result.msg }); setStep(1); return; }
     setStep(3);
   };
@@ -304,17 +333,12 @@ function ForgotPanel({ onForgotPassword, onSwitch }) {
 
 // ─── MAIN EXPORT ─────────────────────────────────────────────────────────────
 export default function AuthPage({ onLogin, onRegister, onForgotPassword }) {
-  const [mode, setMode] = useState('login'); // 'login' | 'register' | 'forgot'
+  const [mode, setMode] = useState('login');
   const brandItems = Array.from({ length: 300 }, (_, i) => BRANDS[i % BRANDS.length]);
 
-  // Wrap onLogin so social buttons also get an account created if new
-  const handleLogin = (email, password) => {
+  const handleLogin = async (email, password) => {
     if (password === '___social___') {
-      // Auto-register social accounts
-      const accounts = JSON.parse(localStorage.getItem('sportiva_accounts') || '{}');
-      if (!accounts[email.toLowerCase()]) {
-        onRegister(email, 'social_auto', email.split('@')[0]);
-      }
+      await onRegister(email, 'social_auto', email.split('@')[0]);
       return onLogin(email, 'social_auto');
     }
     return onLogin(email, password);

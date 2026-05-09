@@ -2,6 +2,13 @@ import React, { useState } from 'react';
 import Footer from '../components/Footer';
 import ReviewSection from '../components/ReviewSection';
 
+// Format harga ke format Indonesia: 1000000 → Rp 1.000.000,00
+function formatPrice(price) {
+  const num = parseFloat(String(price).replace(/[^\d.]/g, ''));
+  if (isNaN(num)) return price;
+  return 'Rp ' + num.toLocaleString('id-ID', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
 const styles = {
   page: {
     paddingTop: 60,
@@ -34,7 +41,6 @@ const styles = {
     gridTemplateColumns: '1fr 380px',
     gap: 48,
   },
-  // Galeri: 1 foto besar di atas, 3 thumbnail di bawah
   gallery: {
     display: 'flex',
     flexDirection: 'column',
@@ -52,7 +58,6 @@ const styles = {
     height: '100%',
     objectFit: 'contain',
     display: 'block',
-    // Tidak ada cursor pointer, tidak bisa di-klik untuk diperbesar
     cursor: 'default',
     userSelect: 'none',
     pointerEvents: 'none',
@@ -77,7 +82,6 @@ const styles = {
     display: 'block',
     transition: 'opacity .2s',
     userSelect: 'none',
-    // Tidak ada cursor pointer dan tidak bisa di-klik untuk diperbesar
     pointerEvents: 'none',
   },
   infoPanel: {
@@ -169,17 +173,12 @@ export default function DetailPage({ product, isFav, onFav, onBack, onShop, revi
 
   if (!product) return null;
 
-  // Selalu tepat 4 foto
   const rawImages = product.images || [product.img];
   const images = Array.from({ length: 4 }, (_, i) => rawImages[i] || rawImages[rawImages.length - 1] || product.img);
-
-  // Foto aktif = images[activeImg]
-  // Thumbnail = 3 foto lainnya (bukan yang aktif)
   const thumbIndices = [0, 1, 2, 3].filter(i => i !== activeImg);
 
   return (
     <div style={styles.page}>
-      {/* Tombol Kembali */}
       <div style={styles.backWrap}>
         <button
           style={styles.backBtn}
@@ -195,22 +194,16 @@ export default function DetailPage({ product, isFav, onFav, onBack, onShop, revi
       </div>
 
       <div style={styles.wrap}>
-        {/* Galeri Foto — tidak bisa diperbesar */}
         <div style={styles.gallery}>
-          {/* Foto utama — besar, tidak bisa diklik/diperbesar */}
           <div style={styles.mainImgWrap}>
             <img
               src={images[activeImg]}
               alt={product.name}
               style={styles.mainImg}
               draggable={false}
-              onError={(e) => {
-                e.target.src = 'https://via.placeholder.com/800x450/f5f5f5/999?text=Produk';
-              }}
+              onError={(e) => { e.target.src = 'https://via.placeholder.com/800x450/f5f5f5/999?text=Produk'; }}
             />
           </div>
-
-          {/* 3 thumbnail — bisa diklik hanya untuk ganti foto aktif, tidak diperbesar */}
           <div style={styles.thumbnailRow}>
             {thumbIndices.map((imgIdx) => (
               <div
@@ -224,24 +217,20 @@ export default function DetailPage({ product, isFav, onFav, onBack, onShop, revi
                 <img
                   src={images[imgIdx]}
                   alt={`${product.name} foto ${imgIdx + 1}`}
-                  style={{
-                    ...styles.thumbImg,
-                    opacity: activeImg === imgIdx ? 1 : 0.72,
-                  }}
+                  style={{ ...styles.thumbImg, opacity: activeImg === imgIdx ? 1 : 0.72 }}
                   draggable={false}
-                  onError={(e) => {
-                    e.target.src = 'https://via.placeholder.com/400x300/f5f5f5/999?text=Produk';
-                  }}
+                  onError={(e) => { e.target.src = 'https://via.placeholder.com/400x300/f5f5f5/999?text=Produk'; }}
                 />
               </div>
             ))}
           </div>
         </div>
 
-        {/* Info Panel */}
         <div style={styles.infoPanel}>
           <h1 style={styles.productName}>{product.name}</h1>
-          <p style={styles.price}>{product.price}</p>
+
+          {/* ← Harga sudah diformat */}
+          <p style={styles.price}>{formatPrice(product.price)}</p>
 
           <p style={styles.sectionLabel}>Tentang Produk</p>
           <p style={styles.desc}>{product.desc}</p>
@@ -299,7 +288,6 @@ export default function DetailPage({ product, isFav, onFav, onBack, onShop, revi
         </div>
       </div>
 
-      {/* ── Review Section ── */}
       <div style={{ maxWidth: 900, margin: '0 auto', padding: '0 40px 60px' }}>
         <ReviewSection
           reviews={reviews || []}
